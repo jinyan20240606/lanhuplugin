@@ -16,6 +16,9 @@ const DevelopDone_Lan_swift = true;//语言-Swift 是否适配完
 const Save_Data_Type_Define_Name_ = "define_name";//自定义控件名
 const Save_Data_Type_Switch_View_Type_ = "switch_view_type";//切换控件类型
 const Save_Data_Type_Union_View_Type_ = "union_view_type";//合成控件类型
+/**
+ * 返回 Save_Data_Type_Define_Name_ = 'define_name'
+ */
 function Save_Data_Type_Define_Name() {return Save_Data_Type_Define_Name_;}
 function Save_Data_Type_Switch_View_Type() {return Save_Data_Type_Switch_View_Type_ + cur_lan;}//控件类型跟语言有关,所以要加个语言类型
 function Save_Data_Type_Union_View_Type() {return Save_Data_Type_Union_View_Type_ + cur_lan;}//控件类型跟语言有关,所以要加个语言类型

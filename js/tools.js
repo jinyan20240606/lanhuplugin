@@ -118,19 +118,25 @@ var page_plug_in_copy_sel_view_class = null;
 var timeout;
 var timeout_copy;
 function checkIsLongTapView(className){var ret = className == longTapClassName;longTapClassName = "";return ret;}
+/**
+ * 添加蓝湖代码预览块的鼠标选中hover事件
+ */
 function page_element_add_event() {
     $('*[class^="lanhu_plug_in"]').find("*").css({"visibility":"visible"});
 
     //左边页面page面板的点击和长按,鼠标经过和离开
     $('*[class^="page_plug_in "]').find("*").on({
+        // 设置500ms延时模拟 长按 切换选中元素及后代元素的整体显示隐藏
         mousedown: function(event) {
             var className = $(this).prop("class");
             timeout = setTimeout(function() {
                 //长按事件,将整个块选中或者隐藏
                 var view = $('*[class*="page_plug_in_copy"]').find("*[class*='"+className+"']");
+                // .css() 方法当用于获取属性值时，它只返回集合中第一个匹配元素的样式属性值
                 var visibility = view.css('visibility');
                 if(visibility == 'hidden'){
                     view.css({"visibility":"visible"});
+                    // eq0是从列表中选择第1个元素, find选择所有后代
                     view.eq(0).find("*").css({"visibility":"visible"});
                 }else{
                     view.css({"visibility":"hidden"});
@@ -140,58 +146,80 @@ function page_element_add_event() {
             }, 500);
             event.stopPropagation();
         },
+        // 点击松开了立即清除上面的延时
         mouseup: function(event) {
             clearTimeout(timeout);
             event.stopPropagation();
         },
+        // 鼠标移出了立即清除上面的延时
         mouseout: function(event) {
             clearTimeout(timeout);
             event.stopPropagation();
         },
+        // 点击时只切换当前元素（不包括后代）的显示隐藏
         click: function (event) {
+            // 为点击的元素添加红色边框
             $(this).css({"outline":"red solid 1px"});
+            // 获取点击元素的class属性
             var className = $(this).prop("class");
+            // 如果是长按事件触发的点击，则直接返回
             if(checkIsLongTapView(className))return;
+            // 查找与点击元素class属性匹配的元素
             var view = $('*[class*="page_plug_in_copy"]').find("*[class*='"+className+"']");
+            // 获取匹配元素的visibility属性
             var visibility = view.css('visibility');
+            // 如果匹配元素是隐藏的，则显示它；否则隐藏它
             if(visibility == 'hidden'){
                 view.css({"visibility":"visible"});
             }else{
                 view.css({"visibility":"hidden"});
             }
+            // 阻止事件冒泡
             event.stopPropagation();
         },
         mouseover: function (event) {
+            // 为鼠标经过的元素添加红色虚线边框
             $(this).css({"outline":"red dashed 1px"});
-            //event.stopPropagation();
+            // 阻止事件冒泡
+            event.stopPropagation();
         },
         mouseout: function (event) {
             $(this).css({"outline":""});
-            //event.stopPropagation();
+            event.stopPropagation();
         }
     });
 
     //右边页面page面板的点击和长按,鼠标经过和离开
     $('*[class^="page_plug_in_copy"]').find("*").on({
+        // 设置750ms延时模拟 长按 切换显示选中元素不含后代，并 操作控件：show_select_view(className,false,true);
         mousedown: function(event) {
+            // 获取当前元素的class属性
             var className = $(this).prop("class");
+            // 设置一个750毫秒的延时，模拟长按事件
             timeout_copy = setTimeout(function() {
-                //长按事件,将整个块选中或者隐藏
+                // 长按事件，将整个块选中或者隐藏
                 longTapClassName = className;
 
-                //长按也是选中
+                // 长按也是选中
+                // 移除所有元素的蓝色边框
                 $('*[class^="page_plug_in_copy"]').find("*").css({"outline":""});
+                // 如果当前选中的元素与之前选中的元素相同，则取消选中
                 if(page_plug_in_copy_sel_view_class != null){
                     if(className == page_plug_in_copy_sel_view_class){
                         page_plug_in_copy_sel_view_class = "";
                         return;
                     }
                 }
+                // 查找与当前元素class属性匹配的元素
                 var view = $('*[class*="page_plug_in_copy"]').find("*[class*='"+className+"']");
+                // 为匹配的元素添加蓝色边框
                 view.css({"outline":"blue solid 1px"});
+                // 更新当前选中的元素class属性
                 page_plug_in_copy_sel_view_class = className;
+                // 显示选中的视图
                 show_select_view(className,false,true);
             }, 750);
+            // 阻止事件冒泡
             event.stopPropagation();
         },
         mouseup: function(event) {
@@ -202,6 +230,8 @@ function page_element_add_event() {
             clearTimeout(timeout_copy);
             event.stopPropagation();
         },
+        // 点击时：1. 选中当前元素给当前元素加蓝实线
+        // 2. 传入当前类名给控件区显示：show_select_view(page_plug_in_copy_sel_view_class,true,false);
         click: function (event) {
             var className = $(this).prop("class");
             if(checkIsLongTapView(className)){event.stopPropagation();return;}
@@ -228,7 +258,7 @@ function page_element_add_event() {
                 }
             }
             $(this).css({"outline":"blue dashed 1px"});
-            //event.stopPropagation();
+            event.stopPropagation();
         },
         mouseout: function (event) {
             if(page_plug_in_copy_sel_view_class != null){
@@ -239,7 +269,7 @@ function page_element_add_event() {
                 }
             }
             $(this).css({"outline":""});
-            //event.stopPropagation();
+            event.stopPropagation();
         }
     });
 }

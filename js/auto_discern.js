@@ -14,6 +14,7 @@ function auto_discern_button_fun(views) {
                     view.father != null &&
                     view.father.viewType != null &&
                     view.father.viewType.toLowerCase() == "button"){
+                    // 将文本元素类型且没有兄弟节点且父元素为button的，设置为button合成控件
                     union_view_type_func(view.className,view.father.className,"button");
                 }
                 var childs = view["views"];

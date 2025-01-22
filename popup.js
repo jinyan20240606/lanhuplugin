@@ -16,11 +16,28 @@
     });
 })();
 
-// 监听来消息 checkHaveInserted
+/**
+ * 监听来消息 checkHaveInserted
+ * 
+ * 插入下列脚本直接执行
+ * - inject.js
+ * - utils
+ * - config
+ * - js
+ * - template
+ * - export_xml
+ * - constraint
+ */
 chrome.runtime.onMessage.addListener(function (request, sender) {
+    // 若不是checkHaveInserted消息，直接跳出
     if (request.action != "checkHaveInserted") {
         return
     }
+    /** 
+     * true: 可以插入后面脚本
+     * 
+     * false：暂时不能插入
+     * */
     var canInsert = request.source;
     if (!canInsert) {closeSelf();return;}
 

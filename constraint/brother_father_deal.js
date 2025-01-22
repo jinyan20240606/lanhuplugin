@@ -8,11 +8,21 @@
 // 为了方便约束计算,需要临时计算和组装数据,方便后面添加约束的时候直接用到,而不是需要用到的是才去计算某个需要的值,这样的好处就是规范好维护,
 // 要计算和组装数据包括控件的maxX,maxY,centerX,centerY,father,brothers,brother_index,brother_top,brother_left,brother_right,brother_bottom,leftBrother,rightBrother,topBrother,bottomBrother等等
 
+/**
+ * 算法:
+ * - 给views树递归子views赋值father属性
+ * - 每一层childViews进行排序，计算兄弟间间距
+ */
 function brother_father_deal(views){
     //递归处理整个节点树
     brother_father_deal_recursive(views,null);
 }
 
+/**
+ * 算法:
+ * - 给views树递归子views赋值father属性
+ * - 每一层childViews进行排序，计算兄弟间间距
+ */
 function brother_father_deal_recursive(views,father){
     if (views && views.length > 0){
         for (let i = 0; i < views.length; i++) {
@@ -28,7 +38,9 @@ function brother_father_deal_recursive(views,father){
 }
 
 /**
- * 控件根据xy按照从上到下,从左到右排序,开始处理子节点
+ * 算法：
+ * - 控件根据xy按照从上到下,从左到右排序
+ * - 排完序再计算相互元素的间距，赋值view新属性上
  */
 function brothers_deal(views) {
     if (views && views.length > 0){
@@ -76,6 +88,9 @@ function brothers_deal(views) {
             }
             if (rightBrother != null) {
                 view.rightBrother = rightBrother;
+                /**
+                 * 距离右侧兄弟的间距
+                 */
                 view.x_r_brother = "" + (parseFloat(view.rightBrother.x) - parseFloat(view.maxX));
             }
             if (topBrother != null) {

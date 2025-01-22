@@ -2,6 +2,7 @@
 //------------------- 添加HTML界面 模块 -------------------
 
 function add_elements() {
+    // debugger;
     //添加复制界面html
     var page_div = $('*[class^="page_plug_in "]');
     var className = page_div.prop("class");
@@ -51,14 +52,15 @@ function chang_to_info_view_type_lan(text) {
 }
 
 /**
- * 切换页面
+ * 渲染蓝湖数据到页面并添加鼠标事件
+ * @param {*} html 蓝湖数据：codePreivew卡片的html源码字符串 -- $('*[class^="page flex-"]').html()
  */
 function switch_page(html) {
-    //移除某个元素
+    // 移除已有page_plug_in 和page_plug_in_copy
     $('*[class^="page_plug_in"]').remove();
-    //添加新元素
+    // 重新初始化page_plug_in 和page_plug_in_copy 元素到页面中左右位置
     re_add_elements_for_new_page(html);
-    //添加元素事件
+    // 左右两预览区添加鼠标事件
     page_element_add_event();
 
     db_clear_lan_hu_pages_data();
@@ -245,6 +247,10 @@ function show_info_view_code(text) {
     }
 }
 
+/**
+ * 控件信息 -- 类型
+ * @param {*} view 
+ */
 function show_select_view_type(view) {
     if (view){
         if (view.viewType) show_info_view_type(info_view_type_lan(view.viewType));
@@ -256,6 +262,10 @@ function show_select_view_type(view) {
     }
 }
 
+/**
+ * 控件信息 -- 命名
+ * @param {*} view 
+ */
 function show_select_view_define_name(view) {
     if (view){
         var defineName = db_getData(curSelClassName,Save_Data_Type_Define_Name());
@@ -267,6 +277,10 @@ function show_select_view_define_name(view) {
     }
 }
 
+/**
+ * 控件信息 -- 合成(控件类型)
+ * @param {*} view 
+ */
 function show_select_view_layer_union(view) {
     if (view){
         if (view.viewType && (
@@ -289,6 +303,11 @@ function show_select_view_layer_union(view) {
     }
 }
 
+/**
+ * 控件信息 -- 代码
+ * 
+ * 主要是将curSelMapView数据传入模板引擎解析，生成代码，插到页面中
+ */
 function show_select_view_code(view,click,longClick) {
     if (view){
         var code = "";
@@ -309,8 +328,14 @@ function refresh_show_select_view() {
 /**
  * click:单击,是查看某个控件和其子控件
  * longClick:长按,是查看某个控件
+ * 
+ * 1. 最核心的还是views的生成
+ * @param {*} viewClassName 左侧面板选中的当前元素类名
+ * @param {*} click 是否是单击
+ * @param {*} longClick 是否是长按
  */
 function show_select_view(viewClassName,click,longClick) {
+    // debugger;
     var views = conversionViewsPure();
     if (views == null) return;
     curViews = views;
@@ -326,6 +351,7 @@ function show_select_view(viewClassName,click,longClick) {
     curSelClassName = view ? viewClassName : "";
     curSelDomView = view ? findDomView(viewClassName) : null;
 
+    // 基于计算后的view信息---->设置右侧控件信息的值 展示
     show_select_view_type(view);
     show_select_view_define_name(view);
     show_select_view_layer_union(view);

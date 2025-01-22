@@ -34,6 +34,7 @@ function remove_px(text){
 
 /**
  * 控件是否隐藏
+ * @returns 隐藏返false，显示返true
  */
 function isVisible_view(map){
     var visibility = map["visibility"];
@@ -643,6 +644,9 @@ function findView_by_className(views, className) {
 
 /**
  * 根据父控件查找子控件
+ * 
+ * 过滤出views中所有满足条件的子元素（其父级为className的子元素）组成数组
+ * @returns childViews数组
  */
 function findChildViews_by_className(views,className) {
     var childViews = new Array();
@@ -707,11 +711,88 @@ function switchViewTypeForView(info,switchViewType) {
 }
 
 /**
- * 控件合成
+ * 控件合成：主要是类似识别组件的逻辑，
+ * 
+ * @param {*} unionViewType 就是类名为key对应的合成控件值
+ * 
+```js 
+假设有两个文本控件需要合并:
+
+原始控件结构:
+// 父控件(容器)
+{
+    className: "text-wrapper_2",
+    viewType: "view",
+    width: "200",
+    height: "100"
+}
+
+// 子控件1(文本)
+{
+    className: "text_1",
+    viewType: "label",
+    text: "标题",
+    font_size: "16px",
+    text_color: "rgba(51,51,51,1)",
+    parent: "text-wrapper_2"
+}
+合并操作:
+// unionViewType的值格式为: "父类名,子类名,合并后类型"
+var unionViewType = "text-wrapper_2,text_1,button";
+
+// 调用合并方法
+unionViewTypeForView(views, parentView, unionViewType);
+合并后的结果:
+// 父控件变成按钮
+{
+    className: "text-wrapper_2",
+    viewType: "button",     // 类型从view变为button
+    oriViewType: "view",    // 保存原始类型
+    width: "200",
+    height: "100",
+    // 继承text_1的文本属性
+    text: "标题",
+    font_size: "16px",
+    text_color: "rgba(51,51,51,1)"
+}
+
+// 子控件1被合并,标记union_view指向父控件
+{
+    className: "text_1",
+    viewType: "label",
+    union_view: "text-wrapper_2",  // 标记已被合并到父控件
+    text: "标题",
+    font_size: "16px",
+    text_color: "rgba(51,51,51,1)",
+    parent: "text-wrapper_2"
+}
+合并过程说明:
+
+1. 父控件(text-wrapper_2)从view类型变为button类型
+2. 子控件1(text_1)的文本相关属性(text、color、font等)被复制到父控件
+3. 子控件1被标记为已合并(union_view指向父控件)
+
+在代码生成时:
+1. 父控件会生成为button控件,包含text_1的文本内容
+2. text_1因为有union_view标记,不会生成代码
+
+这种合并机制常用于:
+
+将容器+文本标签合并为按钮
+将图片容器+文本标签合并为带文字的图片按钮
+优化控件层级,减少嵌套层数
+```
+
+1. block_5 flex-row父, text_1子, textField用于父，为最终合成控件的名
+    - 遍历到1参元素info进来：viewType设为textField
+    - 遍历到2参info进来时：viewType设为textField
+    - 每次遍历检查将2参对应的元素设置union_view为1参的类名
+
  */
 function unionViewTypeForView(views,info,unionViewType) {
     if(unionViewType && unionViewType.length > 0) {
         //unionViewType 内容格式:className1,className2,unionViewType
+        // 如："block_5 flex-row,text_1,textField"
         var splits = unionViewType.split(",");
         if (splits.length == 3){
             var viewType = splits[2];
@@ -728,7 +809,9 @@ function unionViewTypeForView(views,info,unionViewType) {
 }
 
 /**
- * 控件合成,文本属性进行复制
+ * 处理子父的合成控件的属性
+ * 1. 将当前控件的union_view属性值设为父级控件类名，表明当前控件要通过父级整体作为合成控件渲染
+ * 2. 将当前控件的文本类属性设为父级控件的文本类属性值，表明当前控件要通过父级整体作为合成控件渲染
  */
 function unionViewTypeForProperty(views, className1, className2) {
     var view = findView_by_className(views,className1);
@@ -749,20 +832,29 @@ function unionViewTypeForProperty(views, className1, className2) {
 }
 
 /**
+ * 核心数据结构生成：
+ * 
+ * 1. 先拿到所有可识别为控件的 map
+ * 2. 往views数组中 每个对象中添加不同控件map相关的viewType字段
  * 赋值自定义控件名,控件类型,控件合成类型
  */
 function conversionSetDefineValue(views,needDefaultName) {
+    // debugger;
     if (views && views.length > 0){
         var newViews = new Array();
+        // 获取所有可识别为控件名字的 map
         var defineNames = db_getAllDataForType(Save_Data_Type_Define_Name());
+        // 获取所有可识别为控件类型的 map
         var switchViewTypes = db_getAllDataForType(Save_Data_Type_Switch_View_Type());
+        // 获取所有可识别为合成控件的 map
         var unionViewTypes = db_getAllDataForType(Save_Data_Type_Union_View_Type());
 
+        // 将可映射为控件的dom信息和控件值，合并到views大结构里
         for (let i = 0; i < views.length; i++) {
             var info = views[i];
             if (info == null)continue;
             var className = info["className"];
-            var isTextViewType = isTextView(info);
+            // var isTextViewType = isTextView(info);
 
             //控件类型切换
             var switchViewType = switchViewTypes[className];
@@ -833,7 +925,12 @@ function view_position_absolute(views){
 }
 
 /**
- * 因为控件都是相对父控件的相对位置,所以这里要进行绝对x,y计算
+ * 因为控件都是相对父控件的相对位置,所以这里要进行child相对于parent的距离x,y坐标计算
+ * 
+ * （因为默认views计算的xy坐标是绝对于窗口的，要改成相对父元素的相对位置）
+ * 
+ * - 若parent为null，则child的x，y坐标就是window_xy 值，相对于document窗口的
+ * - 若parent不为null，则child的x，y坐标需要用parent的x，y坐标减去child的x，y坐标
  */
 function view_position_relative_x_y(parent,child) {
     if (parent && child){
@@ -877,7 +974,9 @@ function imageview_position_relative_special_deal(views,view){
 }
 
 /**
- * 对控件进行父子归类,递归方法
+ * 对控件进行父子归类,递归方法，平铺的结构变成树结构，同时xy坐标位置变成相对父元素的相对位置
+ * 
+ * views,parents,null
  */
 function view_position_relative_recursive(views,parents,parent){
     if (views && views.length > 0 && parents && parents.length > 0){
@@ -891,7 +990,7 @@ function view_position_relative_recursive(views,parents,parent){
             var className = view["className"];
             view_position_relative_x_y(parent,view);
             //开始递归
-            var childViews = findChildViews_by_className(views,className);
+            var childViews/** 数组 */ = findChildViews_by_className(views,className);
             if (childViews && childViews.length > 0){
                 view["views"] = childViews;
                 view_position_relative_recursive(views,childViews,view);
@@ -901,7 +1000,8 @@ function view_position_relative_recursive(views,parents,parent){
 }
 
 /**
- * 对控件进行父子归类
+ * 父子归类：平铺变成dom树的形式，views代表children，parent代表父级
+ * 并绝对xy坐标变成相对父元素的相对坐标
  */
 function view_position_relative(views){
     if (views && views.length > 0){
@@ -923,12 +1023,13 @@ function view_position_relative(views){
 }
 
 /**
- * 对隐藏控件进行父子归类,因为如果隐藏的控件是View,那所有子控件都需要重新指向父控件
+ * 对隐藏控件进行父子归类,因为如果隐藏的控件是View,那所有子控件都需要重新指向View的父控件
  */
 function view_deal_hide_position_relative(views){
     if (views && views.length > 0){
         for (let i = 0; i < views.length; i++) {
             var view = views[i];
+            // 如果隐藏
             if (!isVisible_view(view)){
                 var childViews = findChildViews_by_className(views,view["className"]);
                 if (childViews && childViews.length > 0){
@@ -981,10 +1082,24 @@ function conversionSetAttrValue(map){
 
 /**
  * 生成用于操作的Views数组,获取当前所有的views
+ * 1. 获取初始views数组
+ * 2. 往views数组中 每个对象中添加不同控件map相关的viewType字段 赋值自定义控件名,控件类型,控件合成类型
+ * 3. views变成树型结构，views每一层childViews进行排序，计算兄弟间间距，都放到约束专属的字段里
+ * 
+ * 示例
+ * 
+ * union_view: "text-wrapper_2 flex-col"
+
+ *viewType: "button"
+ * 
+ * @returns 返回views
  */
 function conversionViewsPure() {
+    // 1、获取array
     var array = assembleProperty();
     view_deal_hide_position_relative(array);
+
+    // 2、不同语言的array转换
     if (isIOS() || isSWIFT()){
         array = conversionSetDefineValue(array,true);//这一行的顺序不能后移
     }
@@ -994,14 +1109,18 @@ function conversionViewsPure() {
     if (isANDROID()){
         array = conversionSetDefineValue(array,false);//这一行的顺序不能后移
     }
+
+    // 3、初始化新数组views
     var views = new Array();
     for (let i = 0; i < array.length; i++) {
         var map = array[i];
         var info = conversionSetAttrValue(map);
         if (isVisible_view(map))views.push(info);
     }
+    // 父子归类：变成dom树的形式，views代表children，parent代表父级
     views = view_position_relative(views);
-    auto_constraint(views);//生成约束
+    //生成约束
+    auto_constraint(views);
     return views;
 }
 

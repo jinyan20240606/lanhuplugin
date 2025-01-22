@@ -4,6 +4,7 @@
 function haveInserted(document) {
     var body = document.body.innerHTML.toString();
     if (body.includes("https://dds.lanhuapp.com")){
+        // 获取 iframe的src url后缀：#/?version_id=be52d203-a52d-46f3-8b45-2557a592158d&source=detailDetachTab&plugin=sketchPlugin&plugin_version=3.2.2
         var url = get_mid("https://dds.lanhuapp.com","\"",body + "\"");
         url = "https://dds.lanhuapp.com" + url;
         url = url.replaceAll("&amp%3B","&");
@@ -17,6 +18,7 @@ function haveInserted(document) {
         return false;
     }
     var lanhu_plug_in = document.getElementById("lanhu_plug_in");
+    // 若已经注入过了, 触发函数时，尝试使容器div 显示出来（非隐藏）
     if (lanhu_plug_in != null) {
         lanhu_plug_in.style.display = "";
         return false;
@@ -24,6 +26,7 @@ function haveInserted(document) {
     return true;
 }
 
+/** 提取text中left和right之间的字符串 */
 function get_mid(left,right,text){
     if (text && left && right && text.length > 0 && left.length > 0 && right.length > 0 && text.includes(left) && text.includes(right) && left != right){
         var leftIndex = text.indexOf(left);

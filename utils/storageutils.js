@@ -34,7 +34,19 @@ function curPageKeyMd5(){
 
 
 /**
- * 获取当前页面存储数据
+ * 获取page_plug_in_copy容器内dom与不同语言控件可映射的----全量list数据
+ * 
+ * 数据是初始化扫描存储的当前page_plug_in_copy容器内所有元素部分可对应的控件类型命名和合成控件类型的映射关系
+ * 
+ * @returns 返回arr 如Array[36]
+ * ```js
+ * "block_5 flex-rowswitch_view_type3"
+ * "block_5 flex-rowunion_view_type3"
+ * "text_1union_view_type3"
+ * "block_5 flex-rowdefine_name"
+ * "block_5 flex-rowswitch_view_type2"
+ * ...
+ * ```
  */
 function db_curPageData() {
     var pageKeysStr = localStorage.getItem(curPageKeyMd5());
@@ -102,6 +114,7 @@ function db_removePageKeys(key) {
  * 保存数据到本地
  */
 function db_saveData(key,value,type) {
+    // debugger;
     if (!db_isSupportStorage())return;
     if (key && key.length > 0){
         if (value && value.length > 0){
@@ -116,7 +129,7 @@ function db_saveData(key,value,type) {
 }
 
 /**
- * 读取数据
+ * 读取数据 localStorage_getItem(key+type);
  */
 function db_getData(key,type) {
     if (!db_isSupportStorage())return "";
@@ -127,19 +140,25 @@ function db_getData(key,type) {
 }
 
 /**
- * 读取某一类型数据 - 一般是后面是某个后缀
+ * 获取可映射为控件的dom-map对象
+ * @param type 数据类型后缀，如"define_name"、"switch_view_type123"，"union_view_type123"等
+ * @return 返回一个Map对象，key是可映射为控件的元素的类名，value是对应的viewType控件类型值
  */
 function db_getAllDataForType(type) {
+    // debugger;
     var map = {};
     if (!db_isSupportStorage())return map;
-    //找到当前页面的数据
+    // 1、获取当前页面存储部分dom与不同语言控件可映射的list 全量数据
     var arr = db_curPageData();
+    // 2、遍历数组，筛选出所有符合type的key
     for (let i = 0; i < arr.length; i++) {
         var key = arr[i];
+        // 跳过不符合type的key
         if (type && type.length > 0 && !key.endsWith(type)){
             continue;
         }
-        var value = db_getData(key,"");//这里不用穿Type,因为拿出来的key已经包含type了
+        // 3、读取数据 localStorage_getItem(key+type);
+        var value = db_getData(key,"");
         var pureKey = key;
         if (type && type.length > 0 && key.endsWith(type)){
             pureKey = pureKey.replaceAll(type,"");
